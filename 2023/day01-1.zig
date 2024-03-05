@@ -19,7 +19,6 @@ pub fn main() !void {
     while (true) {
         // get line
         line = try file.reader().readUntilDelimiterOrEof(lineBuf, '\n');
-        //_ = try std.io.getStdOut().writer().print("line: {s}\n", .{line.?});
         if (line == null) {
             break;
         }
@@ -34,10 +33,8 @@ pub fn main() !void {
                 digit2 = char;
             }
             index += 1;
-            //_ = try std.io.getStdOut().writer().print("char: {c} {d}\n", .{ char, char });
         }
 
-        //        _ = try std.io.getStdOut().writer().print("1: {c} {d}, 2: {c} {d}\n", .{ digit1, digit1, digit2, digit2 });
         sum += (try std.fmt.charToDigit(digit1, 10) * 10) + try std.fmt.charToDigit(digit2, 10);
 
         digit1 = 0;
