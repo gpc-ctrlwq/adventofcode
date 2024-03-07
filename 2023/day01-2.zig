@@ -17,8 +17,8 @@ pub fn main() !void {
     var line: ?[]const u8 = null;
 
     // init search trie
-    const searchTrie = newTrieNode(allocator);
-    addWord(searchTrie, "one");
+    const searchTrie = TrieNode.newTrieNode();
+    searchTrie.addWord("one");
     var trieDepth: u8 = 0;
 
     while (true) {
@@ -59,34 +59,41 @@ pub fn main() !void {
 }
 
 const TrieNode = struct {
-    children: std.ArrayList(TrieNode),
+    children: ?[26]*TrieNode,
     val: u8,
     isEndOfWord: bool = false,
-};
 
-fn newTrieNode(allocator: std.mem.Allocator) *TrieNode {
-    return *TrieNode{
-        .children = std.ArrayList(TrieNode).init(allocator),
-        .isEndOfWord = false,
-        .val = 0,
-    };
-}
-
-fn addWord(trieRoot: *TrieNode, val: []const u8) void {
-    var currentNode: *TrieNode = trieRoot;
-
-    ch: for (val) |char| {
-        for (currentNode.children) |child| {
-            if (child.val == char) {
-                // char already exists at this depth, go next
-                currentNode = &child;
-                continue :ch;
-            }
-        }
-
-        // if no match at this depth, add a new node for char
-        currentNode.children[char] = TrieNode;
-        currentNode = &currentNode.children[char];
+    pub fn newTrieNode() TrieNode {
+        return .{
+            .children = null,
+            .isEndOfWord = false,
+            .val = 0,
+        };
     }
-    currentNode.isEndOfWord = true;
-}
+
+    pub fn addWord(self: *const TrieNode, val: []const u8) void {
+        var currentNode = self;
+
+        ch: for (val) |char| {
+            if (currentNode.children) |children| {
+                for (children) |child| {
+                    if (child.val == char) {
+                        // char already exists at this depth, go next
+                        currentNode = child;
+                        continue :ch;
+                    }
+                }
+            }
+
+            // if no match at this depth, add a new node for char
+            currentNode.children[char] = TrieNode;
+            currentNode = &currentNode.children[char];
+        }
+        currentNode.isEndOfWord = true;
+    }
+
+    pub fn deinit() void {
+        // TODO
+        // self.children.deinit
+    }
+};
