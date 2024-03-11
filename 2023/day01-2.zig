@@ -1,4 +1,5 @@
 const std = @import("std");
+const Allocator = std.mem.Allocator;
 
 pub fn main() !void {
     const file = try std.fs.cwd().openFile("./day01-1_input.txt", .{});
@@ -17,8 +18,8 @@ pub fn main() !void {
     var line: ?[]const u8 = null;
 
     // init search trie
-    const searchTrie = TrieNode.newTrieNode();
-    searchTrie.addWord("one");
+    var searchTrie: TrieNode = .{};
+    try searchTrie.addWord("one", allocator);
     var trieDepth: u8 = 0;
 
     while (true) {
@@ -59,35 +60,28 @@ pub fn main() !void {
 }
 
 const TrieNode = struct {
-    children: ?[26]*TrieNode,
-    val: u8,
+    children: []TrieNode = undefined,
+    val: u8 = 0,
     isEndOfWord: bool = false,
 
-    pub fn newTrieNode() TrieNode {
-        return .{
-            .children = null,
-            .isEndOfWord = false,
-            .val = 0,
-        };
-    }
-
-    pub fn addWord(self: *const TrieNode, val: []const u8) void {
-        var currentNode = self;
+    pub fn addWord(self: *TrieNode, val: []const u8, alloc: Allocator) !void {
+        var currentNode = self.*;
 
         ch: for (val) |char| {
-            if (currentNode.children) |children| {
-                for (children) |child| {
-                    if (child.val == char) {
-                        // char already exists at this depth, go next
-                        currentNode = child;
-                        continue :ch;
-                    }
+            for (currentNode.children) |child| {
+                if (child.val == char) {
+                    // char already exists at this depth, go next
+                    currentNode = child;
+                    continue :ch;
                 }
             }
 
-            // if no match at this depth, add a new node for char
-            currentNode.children[char] = TrieNode;
-            currentNode = &currentNode.children[char];
+            // if no match at this depth or children is null, add new children
+            currentNode.children = try alloc.alloc(TrieNode, 26);
+            // TODO handle free
+
+            // todo
+            //currentNode = &currentNode.children[char];
         }
         currentNode.isEndOfWord = true;
     }
@@ -97,3 +91,5 @@ const TrieNode = struct {
         // self.children.deinit
     }
 };
+
+// TODO wrap TrieNode in a TrieStructure, so that it can handle it's own memory arena
