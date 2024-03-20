@@ -18,9 +18,13 @@ pub fn main() !void {
     var line: ?[]const u8 = null;
 
     // init search trie
-    var searchTrie: TrieNode = .{};
-    try searchTrie.addWord("one", allocator);
-    var trieDepth: u8 = 0;
+    var searchTrie: TrieStructure = .{};
+    try searchTrie.init(allocator, 26);
+    try searchTrie.addWord("one");
+    try searchTrie.addWord("two");
+    try searchTrie.addWord("three");
+
+    try searchTrie.print();
 
     while (true) {
         // get line
@@ -41,9 +45,9 @@ pub fn main() !void {
                 digit2 = char;
             }
 
-            // if number word
-            // todo search char in tree, update depth var
-            trieDepth = 0;
+            // if number as word
+            // todo search char in tree, update current node
+            //currentNode = ;
 
             lineIdx += 1;
         }
@@ -60,36 +64,67 @@ pub fn main() !void {
 }
 
 const TrieNode = struct {
-    children: []TrieNode = undefined,
+    children: ?[]TrieNode = null,
     val: u8 = 0,
     isEndOfWord: bool = false,
 
-    pub fn addWord(self: *TrieNode, val: []const u8, alloc: Allocator) !void {
-        var currentNode = self.*;
-
-        ch: for (val) |char| {
-            for (currentNode.children) |child| {
-                if (child.val == char) {
-                    // char already exists at this depth, go next
-                    currentNode = child;
-                    continue :ch;
-                }
-            }
-
-            // if no match at this depth or children is null, add new children
-            currentNode.children = try alloc.alloc(TrieNode, 26);
-            // TODO handle free
-
-            // todo
-            //currentNode = &currentNode.children[char];
-        }
-        currentNode.isEndOfWord = true;
-    }
-
-    pub fn deinit() void {
-        // TODO
-        // self.children.deinit
+    // TODO
+    pub fn getChildWithVal(self: TrieNode, val: u8) ?TrieNode {
+        _ = val;
+        _ = self;
     }
 };
 
-// TODO wrap TrieNode in a TrieStructure, so that it can handle it's own memory arena
+const TrieStructure = struct {
+    arena: std.heap.ArenaAllocator = undefined,
+    allocator: Allocator = undefined,
+    children: []TrieNode = undefined,
+    width: u8 = 0,
+
+    pub fn init(self: *TrieStructure, allocator: Allocator, width: u8) !void {
+        self.arena = std.heap.ArenaAllocator.init(allocator);
+        self.allocator = allocator;
+        self.width = width;
+        self.children = try self.allocator.alloc(TrieNode, self.width);
+    }
+
+    pub fn deinit(self: TrieStructure) void {
+        self.allocator.deinit();
+    }
+
+    pub fn print(self: TrieNode) !void {
+        std.debug.print("print()\n", .{});
+        if (self.children) |children| {
+            std.debug.print("len{d}\n", .{self.children.?.len});
+            for (children) |child| {
+                std.debug.print("{d}\n", .{child.val});
+                try child.print();
+            }
+        }
+    }
+
+    pub fn addWord(self: TrieStructure, word: []const u8) !void {
+        //TODO
+        var currentNode: TrieNode = self.children;
+
+        for (word) |char| {
+            // offset char ascii value to children index
+            // NOTE: assumes lowercase alpha only
+            const index = char - 97;
+
+            // if children is uninitialized, init
+            if (currentNode.children == null) {
+                currentNode.children = try self.allocator.alloc(TrieNode, self.width);
+            }
+
+            // if no match at this depth add child obj
+            if (currentNode.children.?[index].val != char) {
+                currentNode.children.?[index] = .{ .val = char };
+            }
+            // char exists at this depth, go next
+            currentNode = currentNode.children.?[index];
+        }
+        //TODO
+        //currentNode.isEndOfWord = true;
+    }
+};
