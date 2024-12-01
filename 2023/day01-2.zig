@@ -23,6 +23,7 @@ pub fn main() !void {
     try searchTrie.addWord("one");
     try searchTrie.addWord("two");
     try searchTrie.addWord("three");
+    defer searchTrie.deinit();
 
     try searchTrie.print();
 

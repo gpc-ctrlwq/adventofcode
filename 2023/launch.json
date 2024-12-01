@@ -1,6 +1,0 @@
-{
-    "name": "Launch",
-    "type": "lldb",
-    "request": "launch",
-    "program": "./day01-2.exe"
-}
