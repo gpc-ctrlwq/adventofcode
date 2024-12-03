@@ -43,6 +43,9 @@ pub fn main() !void {
     var map = std.AutoHashMap(u64, Frequency).init(hpa);
     defer map.deinit();
 
+    // TODO: I should get the occurance rate of each value in the rightList first,
+    // then for each value in the leftList, multiply it by its occurance rate in the rightList
+    // and add sum them. It would be O(n) instead of O(n2). oops
     var val: u64 = undefined;
     for (0..listLength) |ii| {
         val = leftList[ii];
