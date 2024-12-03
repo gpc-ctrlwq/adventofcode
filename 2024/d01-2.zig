@@ -4,15 +4,19 @@ pub fn main() !void {
     const file = try std.fs.cwd().openFile("./d01-1_input.txt", .{});
     defer file.close();
 
-    const hpa = std.heap.page_allocator;
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
-    const lineBuf = try hpa.alloc(u8, 15);
-    defer hpa.free(lineBuf);
+    const lineBuf = try allocator.alloc(u8, 15);
+    defer allocator.free(lineBuf);
 
     var string: ?[]const u8 = undefined;
     const listLength = 1000;
-    const leftList = try hpa.alloc(u64, listLength);
-    const rightList = try hpa.alloc(u64, listLength);
+    const leftList = try allocator.alloc(u64, listLength);
+    defer allocator.free(leftList);
+    const rightList = try allocator.alloc(u64, listLength);
+    defer allocator.free(rightList);
 
     var cleanString: []const u8 = undefined;
 
@@ -40,7 +44,7 @@ pub fn main() !void {
     };
 
     // get frequency of each value in each list
-    var map = std.AutoHashMap(u64, Frequency).init(hpa);
+    var map = std.AutoHashMap(u64, Frequency).init(allocator);
     defer map.deinit();
 
     // TODO: I should get the occurance rate of each value in the rightList first,
