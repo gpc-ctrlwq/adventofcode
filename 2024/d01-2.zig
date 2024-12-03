@@ -14,8 +14,8 @@ pub fn main() !void {
     var string: ?[]const u8 = undefined;
     const listLength = 1000;
     const leftList = try allocator.alloc(u64, listLength);
-    defer allocator.free(leftList);
     const rightList = try allocator.alloc(u64, listLength);
+    defer allocator.free(leftList);
     defer allocator.free(rightList);
 
     var cleanString: []const u8 = undefined;
@@ -38,42 +38,26 @@ pub fn main() !void {
         rightList[ii] = std.zig.parseNumberLiteral(cleanString).int;
     }
 
-    const Frequency = struct {
-        l: u64,
-        r: u64,
-    };
-
-    // get frequency of each value in each list
-    var map = std.AutoHashMap(u64, Frequency).init(allocator);
+    // get frequency of each value in right list
+    // map key is the list value, map value is frequency
+    var map = std.AutoHashMap(u64, u64).init(allocator);
     defer map.deinit();
-
-    // TODO: I should get the occurance rate of each value in the rightList first,
-    // then for each value in the leftList, multiply it by its occurance rate in the rightList
-    // and add sum them. It would be O(n) instead of O(n2). oops
-    var val: u64 = undefined;
     for (0..listLength) |ii| {
-        val = leftList[ii];
-        var entry = try map.getOrPut(val);
+        const entry = try map.getOrPut(rightList[ii]);
         if (!entry.found_existing) {
-            entry.value_ptr.l = 1;
-            entry.value_ptr.r = 0;
+            entry.value_ptr.* = 1;
         } else {
-            entry.value_ptr.l += 1;
-        }
-
-        for (0..listLength) |kk| {
-            if (rightList[kk] == val) {
-                entry.value_ptr.r += 1;
-            }
+            entry.value_ptr.* += 1;
         }
     }
 
-    // calc similatiry score
+    // calc similarity score
     var similarityScore: u64 = 0;
-    var iter = map.iterator();
-
-    while (iter.next()) |entry| {
-        similarityScore += (entry.key_ptr.* * entry.value_ptr.l * entry.value_ptr.r);
+    for (0..listLength) |ii| {
+        const value = map.get(leftList[ii]);
+        if (value != null) {
+            similarityScore += leftList[ii] * value.?;
+        }
     }
 
     // print
